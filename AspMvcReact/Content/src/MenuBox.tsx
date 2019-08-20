@@ -23,10 +23,11 @@ export class MenuBox extends React.Component<any, IAppState> {
         xhr.open('get', '/data/GetUserId/', true);
         xhr.onload = function () {
             var userid: number = parseInt(xhr.responseText);
-            var tmp: IAppState = this.state;
-            tmp.userId = userid;
-            this.setState(tmp);
-
+            if (!isNaN(userid)) {
+                var tmp: IAppState = this.state;
+                tmp.userId = userid;
+                this.setState(tmp);
+            }
         }.bind(this);
         xhr.send();
     }

@@ -111,9 +111,11 @@ class MenuBox extends React.Component {
         xhr.open('get', '/data/GetUserId/', true);
         xhr.onload = function () {
             var userid = parseInt(xhr.responseText);
-            var tmp = this.state;
-            tmp.userId = userid;
-            this.setState(tmp);
+            if (!isNaN(userid)) {
+                var tmp = this.state;
+                tmp.userId = userid;
+                this.setState(tmp);
+            }
         }.bind(this);
         xhr.send();
     }

@@ -26,6 +26,7 @@ namespace AspMvcReact.Controllers
             return Json(menuItems, JsonRequestBehavior.AllowGet);
         }
         [HttpGet]
+        [AuthorizeFoodMiracles]
         public string GetUserId()
         {
             int uid = -1;
@@ -34,6 +35,7 @@ namespace AspMvcReact.Controllers
             return uid.ToString();
         }
         [HttpPost]
+        [AuthorizeFoodMiracles]
         public ActionResult PlaceOrder(IList<FoodItem> items, int id)
         {
             bool dbSuceess = false;
@@ -77,6 +79,35 @@ namespace AspMvcReact.Controllers
             else
                 return Json("sucess false", JsonRequestBehavior.AllowGet);
 
+        }
+
+        public class AuthorizeFoodMiracles : AuthorizeAttribute
+        {
+            protected override bool AuthorizeCore(HttpContextBase httpContext)
+            {
+                if (httpContext == null) throw new ArgumentNullException("httpContext");
+
+                // Make sure the user logged in.
+                if (httpContext.Session["Email"] == null)
+                {
+                    return false;
+                }
+
+                // Do you own custom stuff here
+                // Check if the user is allowed to Access resources;
+
+                return true;
+            }
+
+            public override void OnAuthorization(AuthorizationContext filterContext)
+            {
+                base.OnAuthorization(filterContext);
+
+                if (this.AuthorizeCore(filterContext.HttpContext) == false)
+                {
+                    filterContext.Result = new RedirectResult("/Account/Login/?ret=" + filterContext.HttpContext.Request.CurrentExecutionFilePath);
+                }
+            }
         }
     }
 }
