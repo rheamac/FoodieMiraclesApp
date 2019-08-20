@@ -50,7 +50,7 @@ export class Popup extends React.Component<any, any> {
           <div className='popup'>
             <div className='popup_inner'>
               <div style={{height:'35px', fontSize:'18'}}>              
-                        <b>Order from Nadia's Gareden Restautrant</b><hr />
+                        <b>Order from Foodie Miracles</b> multi-cusine restautrant<hr />
               </div>
 
               <div className='foodList'>{myItems}</div>
