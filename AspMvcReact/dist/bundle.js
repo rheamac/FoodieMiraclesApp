@@ -97,12 +97,14 @@
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const React = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+const Popup_1 = __webpack_require__(/*! ./Popup */ "./Content/src/Popup.tsx");
 class MenuBox extends React.Component {
     constructor(state) {
         super(state);
         this.state = { items: null, myOrder: null, showPopup: false, userId: 0, orderPlaced: false };
         this.getLoginStatus();
         this.loadMenusFromServer();
+        this.handleDataFromChild = this.handleDataFromChild.bind(this);
     }
     getLoginStatus() {
         var xhr = new XMLHttpRequest();
@@ -148,6 +150,49 @@ class MenuBox extends React.Component {
         tmp.showPopup = false;
         this.setState(tmp);
     }
+    removeFromCart(id) {
+        if (this.state.userId < 1) {
+            alert('Log in to continue!');
+            return;
+        }
+        var myCart = this.state.myOrder || [];
+        var allItems = this.state.items;
+        myCart.splice(id, 1);
+        var tmp = this.state;
+        tmp.myOrder = myCart;
+        this.setState(tmp);
+    }
+    continueOrder() {
+        var tmp = this.state;
+        tmp.showPopup = true;
+        this.setState(tmp);
+        document.getElementById('dvcart').style.visibility = 'hidden';
+    }
+    handleDataFromChild(popupShown, isOrderPlaced) {
+        var tmp = this.state;
+        if (isOrderPlaced) {
+            tmp.myOrder = null;
+            tmp.orderPlaced = true;
+            tmp.showPopup = false;
+        }
+        else {
+            tmp.orderPlaced = false;
+            tmp.showPopup = false;
+        }
+        this.setState(tmp);
+        document.getElementById('dvcart').style.visibility = 'visible';
+    }
+    toggleView() {
+        var elm = document.getElementById('cartContent');
+        if (elm.style.display == 'block') {
+            elm.style.display = 'none';
+            document.getElementById('btnToggle').innerText = '+';
+        }
+        else {
+            elm.style.display = 'block';
+            document.getElementById('btnToggle').innerText = '-';
+        }
+    }
     render() {
         let menus = this.state.items || [];
         var menuList = menus.map(function (menu) {
@@ -168,6 +213,7 @@ class MenuBox extends React.Component {
                 React.createElement("hr", null)));
         }, this);
         var total = 0;
+        var cartItemIndex = 0;
         let myCart = this.state.myOrder || [];
         var myItems = myCart.map(function (menu) {
             total += menu.Price * menu.Quantity;
@@ -182,6 +228,7 @@ class MenuBox extends React.Component {
                 menu.Price * menu.Quantity,
                 " ",
                 React.createElement("br", null),
+                React.createElement("a", { href: '#', onClick: this.removeFromCart.bind(this, cartItemIndex++) }, "Remove"),
                 React.createElement("hr", null)));
         }, this);
         var totalAndContinueLink = React.createElement("div", { className: "grandTotal cartEmpty" }, "Cart Empty!");
@@ -190,16 +237,108 @@ class MenuBox extends React.Component {
                 React.createElement("div", { className: "grandTotal cartNotEmpty" },
                     "Grand Total: $",
                     total,
-                    React.createElement("button", { className: "greenBtn continueOrder" }, "Continue Order"));
+                    React.createElement("button", { className: "greenBtn continueOrder", onClick: this.continueOrder.bind(this) }, "Continue Order"));
+        var cart = document.getElementById("dvcart");
+        var menu = document.getElementById("dvmenu");
+        if (this.state.orderPlaced)
+            cart.innerHTML = '<div class="orderPlaced">Order Placed successfully</div>';
+        if (this.state.userId < 1) {
+            myItems = null;
+            if (cart != null)
+                cart.style.display = "none";
+            if (menu != null)
+                menu.style.flex = "0 0 85%";
+        }
+        else {
+            if (cart != null)
+                cart.style.display = "block";
+            if (menu != null)
+                menu.style.flex = "0 0 55%";
+        }
         return (React.createElement("div", null,
+            this.state.showPopup ?
+                React.createElement(Popup_1.Popup, { handlerFromParent: this.handleDataFromChild, myOrder: this.state.myOrder, userId: this.state.userId }) : null,
             React.createElement("div", { id: "wrapper" },
                 React.createElement("div", { id: "dvmenu" }, menuList),
                 React.createElement("div", { id: "dvcart" },
+                    React.createElement("div", { className: 'myCart' },
+                        "My Cart ",
+                        React.createElement("button", { id: "btnToggle", className: "smartButton", onClick: this.toggleView.bind(this) }, "+")),
                     React.createElement("div", { id: "cartContent" }, myItems),
                     totalAndContinueLink))));
     }
 }
 exports.MenuBox = MenuBox;
+
+
+/***/ }),
+
+/***/ "./Content/src/Popup.tsx":
+/*!*******************************!*\
+  !*** ./Content/src/Popup.tsx ***!
+  \*******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const React = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+class Popup extends React.Component {
+    constructor(state) {
+        super(state);
+        this.state = { items: null, myOrder: null, showPopup: false, userId: 0, orderPlaced: false };
+        this.placeOrder = this.placeOrder.bind(this);
+        this.closePopup = this.closePopup.bind(this);
+    }
+    placeOrder() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('post', "/data/PlaceOrder/" + this.props.userId, true);
+        xhr.setRequestHeader('Content-type', 'application/json');
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                this.props.handlerFromParent(false, true);
+            }
+        }.bind(this);
+        xhr.send(JSON.stringify(this.props.myOrder));
+    }
+    closePopup() {
+        this.props.handlerFromParent(false, false);
+    }
+    render() {
+        var total = 0;
+        var totalMsg = '';
+        let myCart = this.props.myOrder || [];
+        var myItems = myCart.map(function (menu) {
+            total += menu.Price * menu.Quantity;
+            return (React.createElement("div", { key: menu.Id },
+                menu.Name,
+                ", Qty: ",
+                menu.Quantity));
+        }, this);
+        return (React.createElement("div", { className: 'popup' },
+            React.createElement("div", { className: 'popup_inner' },
+                React.createElement("div", { style: { height: '35px', fontSize: '18' } },
+                    React.createElement("b", null, "Order from Nadia's Gareden Restautrant"),
+                    React.createElement("hr", null)),
+                React.createElement("div", { className: 'foodList' }, myItems),
+                React.createElement("div", { style: { height: '35px' } },
+                    React.createElement("hr", null),
+                    "Total = $",
+                    (Math.round(total * 100) / 100).toFixed(2)),
+                React.createElement("div", { style: { height: '25px' } }, "Tax = 0"),
+                React.createElement("div", { className: 'grandSum' },
+                    "Grand Total: $",
+                    (Math.round(total * 100) / 100).toFixed(2)),
+                React.createElement("div", { className: 'payment' }, "Payment:  [Cedit Card on file will be Charged!]"),
+                React.createElement("div", { style: { height: '20px' } }, "Deliver to: [address on file]"),
+                React.createElement("div", { className: 'delivEstimate' }, "Delivery estimates: 20 - 40 minutes"),
+                React.createElement("div", { style: { bottom: '11px' } },
+                    React.createElement("button", { className: "greenBtn a_left", onClick: this.placeOrder }, "Submit Order"),
+                    React.createElement("button", { className: "greenBtn a_right", onClick: this.closePopup }, "Back")))));
+    }
+}
+exports.Popup = Popup;
 
 
 /***/ }),
