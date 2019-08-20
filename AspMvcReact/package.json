@@ -1,0 +1,21 @@
+{
+  "name": "mypkg",
+  "version": "1.1.1",
+  "main": "webpack.config.js",
+  "dependencies": {
+    "@types/react": "^16.9.2",
+    "@types/react-dom": "^16.8.5",
+    "awesome-typescript-loader": "^5.2.1",
+    "react": "^16.9.0",
+    "react-dom": "^16.9.0",
+    "source-map-loader": "^0.2.4",
+    "typescript": "^3.5.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rhea Machado",
+  "license": "ISC",
+  "description": ""
+}
